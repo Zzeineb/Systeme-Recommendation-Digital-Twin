@@ -1,0 +1,617 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>DAPO 4.0 · Multi-Camera Digital Twin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{color-scheme:light;--ink:#1F2A37;--mut:#6B7280;--g:#2FB56F;--r:#E5484D;--y:#F5B83D;--card:rgba(255,255,255,.86);--ln:rgba(31,42,55,.08)}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:14px/1.45 Inter,system-ui,sans-serif;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;gap:14px;padding:max(14px,env(safe-area-inset-top,0px)) 20px max(22px,env(safe-area-inset-bottom,0px));background:radial-gradient(1200px 700px at 20% 10%,#FBF7F2,transparent),linear-gradient(135deg,#F7F2EC,#F4E9E1 60%,#F1E6DF)}
+h1,h2,h3,p{margin:0}
+.card{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #fff;border-radius:18px;box-shadow:0 8px 30px rgba(120,90,60,.10);padding:14px 16px}
+.card h3{font-size:15px;font-weight:600;display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.card h3 svg{width:18px;height:18px;color:var(--mut)}
+header{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+header h1{font-size:19px;font-weight:600}header small{color:var(--mut);display:block}
+nav{display:flex;gap:4px;background:rgba(255,255,255,.7);border-radius:99px;padding:4px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+nav button{font:inherit;border:0;background:none;cursor:pointer;padding:7px 18px;border-radius:99px;color:var(--mut);font-weight:500}nav .on{background:#fff;color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.rt{display:flex;gap:14px;align-items:center}.live{display:flex;gap:7px;align-items:center;font-weight:500}.dot{width:10px;height:10px;border-radius:50%;background:var(--g)}
+.bell{position:relative;width:38px;height:38px;border-radius:50%;background:#fff;display:grid;place-items:center}.bell b{position:absolute;top:-2px;right:-2px;background:var(--r);color:#fff;font-size:10px;border-radius:50%;width:16px;height:16px;display:grid;place-items:center}
+.av{width:38px;height:38px;border-radius:50%;background:#E3E5E8;display:grid;place-items:center;font-weight:600;color:#555}
+
+/* Stage: 3D Digital Twin with Left Coverage Card and Right Recommendation + Optional Status Dock */
+.stage{position:relative;flex:1;min-height:560px}
+.cv{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab;border-radius:20px}
+.cv canvas{width:100%;height:100%;display:block}
+.tag{position:absolute;left:0;top:0;pointer-events:none;background:#fff;border-radius:99px;padding:3px 11px;font-weight:600;font-size:12.5px;box-shadow:0 2px 10px rgba(0,0,0,.12);white-space:nowrap;display:flex;gap:6px;align-items:center}
+.tag i{width:8px;height:8px;border-radius:50%;display:block}
+.L{position:absolute;left:0;top:0;width:236px;z-index:2}
+.Rt{position:absolute;right:0;top:0;width:310px;display:flex;flex-direction:column;gap:10px;z-index:2;max-height:100%;overflow-y:auto;padding-bottom:4px}
+.Rt::-webkit-scrollbar{width:4px}.Rt::-webkit-scrollbar-thumb{background:rgba(31,42,55,.15);border-radius:4px}
+#det{display:flex;flex-direction:column;gap:10px}
+#det[hidden]{display:none}
+
+.donut{display:block;margin:0 auto 10px;width:142px;height:142px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px}.row span{display:flex;gap:8px;align-items:center}.row i{width:11px;height:11px;border-radius:50%}
+.big{font-size:36px;font-weight:700;line-height:1}.ok{color:var(--g)}.bad{color:var(--r);font-weight:600}
+ul.t{margin:0;padding:0;list-style:none;display:grid;gap:6px}ul.t li{display:flex;gap:8px}ul.t li:before{content:"";flex:none;width:8px;height:8px;margin-top:6px;border-radius:50%;background:var(--g)}
+
+/* Recommendation & Simulation Card docked beside Digital Twin */
+.rc{background:linear-gradient(180deg,rgba(255,250,244,.97),rgba(255,255,255,.94));border:2px solid #F4A261;box-shadow:0 14px 36px rgba(244,162,97,.22),0 4px 14px rgba(31,42,55,.08);padding:16px 18px}
+.rc h3{justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(244,162,97,.28)}.rc h3 span{display:flex;gap:8px;align-items:center}
+.sim-badge{background:#FDEBD8;color:#9C4212;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:99px}
+.arr{border:1px solid rgba(244,162,97,.45);background:#FFF9F2;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:15px;font-weight:600;display:grid;place-items:center;color:#7C340E}
+.arr:hover{background:#FDEBD8;border-color:#F4A261;color:#6E2C0A}
+.sim-lbl{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9C4212;margin-bottom:5px}
+.sim-select{width:100%;appearance:none;-webkit-appearance:none;font:inherit;font-weight:700;font-size:14px;color:var(--ink);background:#FFF8F0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239C4212' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;border:2px solid #F4A261;border-radius:12px;padding:10px 36px 10px 12px;margin-bottom:10px;cursor:pointer;outline:none;box-shadow:0 3px 10px rgba(244,162,97,.18);transition:all .15s}
+.sim-select:hover{background-color:#FDEBD8;box-shadow:0 4px 14px rgba(244,162,97,.26)}
+.sim-select:focus{border-color:#E08A44;box-shadow:0 0 0 3px rgba(244,162,97,.28)}
+.rc p#rt{font-size:13.5px;font-weight:500;color:var(--ink);line-height:1.4}
+.rc .m{display:flex;align-items:baseline;gap:8px;margin:10px 0;font-weight:700;font-size:22px}.rc .m small{font-size:12.5px;color:var(--ink);font-weight:600}
+.ctl{display:flex;gap:6px;align-items:center}.ctl input{flex:1;min-width:50px;accent-color:#F4A261;cursor:pointer}
+.btn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--ln);background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer;white-space:nowrap}.btn:hover{background:#F9FAFB}.btn.go{background:#F4A261;color:#1F2A37;border-color:#E7924D;box-shadow:0 2px 8px rgba(244,162,97,.28)}.btn.go:hover{background:#EE9852}
+.vd{margin-top:8px;border-radius:10px;padding:7px 10px;font-weight:600;font-size:12.5px;background:#F1F2F4}.vd.ok{background:#E3F5EC;color:#1E8A52}.vd.bad{background:#FCE9EA;color:#C23338}
+
+/* Streamlined Bottom Cards (2 balanced columns) */
+.bot{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.dep{display:flex;gap:14px;align-items:center}.dep svg{flex:none;width:64px}.dep p{border-left:1px solid var(--ln);padding-left:14px;font-size:13.5px}
+.kv{display:flex;gap:18px;align-items:center}.kv div+div{border-left:1px solid var(--ln);padding-left:18px}.kv b{font-size:15.5px;display:block;margin:2px 0}
+
+@media(max-width:1080px){
+  .stage{min-height:0;display:flex;flex-direction:column;gap:12px}
+  .cv{position:relative;height:440px;order:-1;border-radius:18px}
+  .L,.Rt{position:static;width:auto;max-height:none;overflow:visible}
+  .bot{grid-template-columns:1fr}
+  nav{margin:0}
+}
+
+/* Streamlined Manager Table & KPI Section */
+#mgr{
+  color-scheme:light;
+  --bg:transparent;--surface:rgba(255,255,255,.86);--soft:rgba(255,255,255,.62);--ink:#1F2A37;--muted:#6B7280;--line:rgba(31,42,55,.09);
+  --cam:#2F6FD0;--cam-bg:#E6EEFB;--wrk:#7A4FC4;--wrk-bg:#F0EAFA;--plan:#1E9C86;--plan-bg:#DFF4F0;--urgent:#E5484D;--urgent-bg:#FDE8E9;--act:#D9772B;--act-bg:#FDEEE1;--watch:#A87A00;--watch-bg:#FCF1D3;--ok:#1E8A52;--ok-bg:#E3F5EC;
+  --font-display:Inter,system-ui,sans-serif;--font-body:Inter,system-ui,sans-serif;
+  background:transparent;font-family:var(--font-body);font-size:14px;line-height:1.45;color:var(--ink)
+}
+#mgr *{box-sizing:border-box}
+#mgr .wrap{max-width:none;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#mgr h2,#mgr h3,#mgr h4{font-family:var(--font-display);margin:0;letter-spacing:-.01em}
+#mgr h2{font-size:16px;font-weight:600}#mgr h3{font-size:15px}#mgr h4{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#mgr p{margin:0}
+#mgr .headline{font:600 17px/1.35 Inter,sans-serif;color:var(--ink)}
+#mgr .mcard,#mgr .kpi{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #fff;border-radius:18px;box-shadow:0 8px 30px rgba(120,90,60,.10)}
+#mgr .mcard{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+#mgr .lead{color:var(--muted);font-size:13.5px}
+#mgr .tablewrap{overflow-x:auto}
+#mgr table{border-collapse:collapse;width:100%;min-width:820px}
+#mgr th{text-align:left;font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 10px 10px;border-bottom:1px solid var(--line);vertical-align:bottom}
+#mgr td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+#mgr tr.main{cursor:pointer;transition:background .15s}
+#mgr tr.main:hover td,#mgr tr.main.open td{background:rgba(255,255,255,.65)}
+#mgr tr.detail td{padding:0;background:rgba(255,255,255,.55)}
+#mgr .rowbtn{font:inherit;font-weight:600;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;display:inline-flex;gap:10px;align-items:center;text-align:left}
+#mgr .rowbtn::after{content:"";width:7px;height:7px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-2px,-2px);flex:none;transition:transform .2s}
+#mgr .rowbtn[aria-expanded="true"]::after{transform:rotate(225deg) translate(-2px,-2px)}
+#mgr .val{font:700 18px/1.1 var(--font-display);font-variant-numeric:tabular-nums}
+#mgr .eff{font:700 14.5px var(--font-display);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ok)}
+#mgr .none{color:var(--muted)}
+
+/* Expanded row details & KPIs */
+#mgr .src{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;white-space:nowrap;width:max-content}
+#mgr .src.cam{background:var(--cam-bg);color:var(--cam)}#mgr .src.wrk{background:var(--wrk-bg);color:var(--wrk)}#mgr .src.plan{background:#E3F5EC;color:#1E8A52}#mgr .src.none{background:#EEF2F6;color:var(--muted)}
+#mgr .badge{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:600;font-size:12.5px;white-space:nowrap}
+#mgr .b-urgent{background:var(--urgent-bg);color:var(--urgent)}#mgr .b-act{background:var(--act-bg);color:var(--act)}#mgr .b-watch{background:var(--watch-bg);color:var(--watch)}#mgr .b-ok{background:var(--ok-bg);color:var(--ok)}
+#mgr .detail-in{padding:18px;display:flex;flex-direction:column;gap:18px}
+#mgr .sec{display:flex;flex-direction:column;gap:8px;min-width:0}
+#mgr .ev{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+#mgr .ev li{display:grid;grid-template-columns:116px minmax(0,1fr);gap:10px;align-items:start}
+#mgr .gains{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+#mgr .gain,#mgr .fact{background:rgba(255,255,255,.85);border:1px solid #fff;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px}
+#mgr .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+#mgr .callout{background:rgba(255,255,255,.88);border:1px solid var(--g);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px}
+#mgr .conf{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#mgr .tags{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+
+/* Compact KPI Row */
+#mgr .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+#mgr .kpi{padding:14px 16px;display:flex;flex-direction:column;gap:4px;text-align:left;font:inherit;color:inherit;cursor:pointer;transition:transform .15s}
+#mgr .kpi:hover{transform:translateY(-1px)}
+#mgr .kpi[aria-pressed="true"]{border-color:var(--g);box-shadow:0 0 0 2px var(--g)}
+#mgr .kpi .l{color:var(--muted);font-size:13px}
+#mgr .kpi .l{color:var(--ink);font-weight:600;font-size:13px}
+#mgr .kpi .v{font:700 30px/1.05 var(--font-display);font-variant-numeric:tabular-nums}
+#mgr .kpi .v small{font-size:16px;font-weight:600;color:var(--ink)}
+#mgr .kpi .hint{font-size:12px;font-weight:600;color:var(--g);margin-top:2px}
+#mgr .kd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+#mgr .close{font:inherit;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 12px;cursor:pointer;color:var(--ink)}
+#mgr .bars{display:flex;flex-direction:column;gap:8px}
+#mgr .bar{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px}
+#mgr .bar .track{height:10px;background:rgba(31,42,55,.07);border-radius:6px;overflow:hidden}
+#mgr .bar .fill{height:100%;border-radius:6px}
+#mgr .bar b{font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+#mgr .f-cam{background:var(--cam)}#mgr .f-wrk{background:var(--wrk)}#mgr .f-plan{background:var(--g)}
+#mgr .mini{display:flex;flex-direction:column;gap:8px}
+#mgr .minirow{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;background:rgba(255,255,255,.8);border-radius:12px;padding:10px 12px}
+#mgr .link{font:inherit;font-weight:600;color:var(--g);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+
+@media (max-width:760px){
+  #mgr .bar{grid-template-columns:110px minmax(0,1fr) auto}
+  #mgr table{min-width:0}#mgr thead{display:none}#mgr table,#mgr tbody,#mgr tr,#mgr td{display:block;width:100%}
+  #mgr tr.main{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:rgba(255,255,255,.85)}
+  #mgr tr.main td{border:0;padding:5px 0;display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;background:transparent!important}
+  #mgr tr.main td::before{content:attr(data-label);color:var(--muted);font-size:12px;font-weight:600}
+  #mgr tr.main td.first{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  #mgr tr.main td.first::before{content:none}
+  #mgr tr.detail{margin:-4px 0 12px}
+  #mgr tr.detail td{border:1px solid var(--line);border-radius:12px;padding:0}
+  #mgr .ev li{grid-template-columns:minmax(0,1fr)}
+}
+
+.tg{cursor:pointer;transition:opacity .15s,transform .15s}.tg:hover{transform:translateY(-1px)}.tg.off{opacity:.45}
+.tag{pointer-events:auto;cursor:pointer}.tag:hover{background:#F3F4F6}
+.lnk,.simbtn{font:inherit;font-weight:600;color:#1F2A37;background:#F4A261;border:1px solid #E7924D;border-radius:10px;padding:8px 14px;cursor:pointer;align-self:flex-start;box-shadow:0 2px 8px rgba(244,162,97,.25)}
+.simbtn:hover{background:#EE9852}
+.lnk{background:none;border:0;box-shadow:none;color:#9C4212;padding:4px 0 0;font-size:12.5px;text-decoration:underline}
+body{position:relative}.pop{position:absolute;top:74px;right:20px;z-index:20;width:min(360px,92vw);display:grid;gap:10px}
+.pop .al{display:grid;gap:4px;padding:10px;border-radius:12px;background:#fff}.pop label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.bell{cursor:pointer}.pop[hidden]{display:none}
+</style></head><body>
+<header>
+ <div><h1>DAPO 4.0 · Multi-Camera Digital Twin</h1></div>
+ <nav><button class="on">Overview</button><button>Analytics</button><button>Alerts</button><button>Settings</button></nav>
+ <div class="rt"><span class="live"><i class="dot"></i>Live <span id="clk"></span></span><div class="bell" data-n="2" role="button" tabindex="0" aria-label="Alerts"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><path d="M6 17V11a6 6 0 0112 0v6l2 2H4zM10 21h4"/></svg><b>2</b></div><div class="av">MC</div></div>
+</header>
+<div class="pop card" id="pop" hidden></div>
+
+<main class="stage">
+ <div class="cv" id="cv"></div>
+ <div class="L">
+  <div class="card">
+   <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg>Coverage Map</h3>
+   <svg class="donut" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#E5E7EA" stroke-width="12"/><circle id="ring" cx="60" cy="60" r="50" fill="none" stroke="#3DC47E" stroke-width="12" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="273 314"/><text id="cov" x="60" y="62" text-anchor="middle" font-size="26" font-weight="700" fill="#1F2A37">87%</text><text x="60" y="80" text-anchor="middle" font-size="12" fill="#444">Coverage</text></svg>
+   <div class="row tg" data-t="green"><span><i style="background:var(--g)"></i>Visible Area</span><b id="vis">87%</b></div>
+   <div class="row tg" data-t="red"><span><i style="background:var(--r)"></i>Blind Spot</span><b id="bl">13%</b></div>
+   <button class="btn go" id="zd" style="margin-top:12px;width:100%" aria-expanded="false">Show workers, tasks &amp; zones</button>
+  </div>
+ </div>
+
+ <div class="Rt">
+  <!-- Recommendation & Simulation Card docked directly beside the 3D Digital Twin -->
+  <div class="card rc">
+   <h3>
+    <span style="color:#9C4212"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3 11c1 1 1 2 1 2h4s0-1 1-2a6 6 0 00-3-11z"/></svg>Simulate Change <span class="sim-badge" id="rn"></span></span>
+    <span><button class="arr" id="pv" aria-label="Previous">‹</button><button class="arr" id="nx" aria-label="Next">›</button></span>
+   </h3>
+   <label for="simSel" class="sim-lbl">Select Poste / Scenario</label>
+   <select id="simSel" class="sim-select" aria-label="Choose what to simulate from the table"></select>
+   <p id="rt"></p>
+   <div class="m"><span id="rm"></span><small id="rl"></small></div>
+   <div class="ctl"><button class="btn" id="b0">Before</button><button class="btn go" id="b1">Apply in twin</button><input type="range" id="sl" min="0" max="100" value="0" aria-label="Before / after"></div>
+   <div class="vd" id="vd"></div>
+   <button class="lnk" id="bt">See this poste in the table ↓</button>
+  </div>
+
+  <!-- Optional toggleable Floor Status Cards -->
+  <div id="det" hidden>
+   <div class="card"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 3-6 6-6s6 2 6 6M16 5a3 3 0 010 6M18 14c2 1 3 3 3 6"/></svg>Workers On Floor</h3><div class="big">4</div><div class="row" style="justify-content:flex-start"><i class="dot"></i>Working</div></div>
+   <div class="card"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg>Current Tasks</h3><ul class="t"><li>Control one piece per pack</li><li>Label compliant pieces</li></ul></div>
+   <div class="card"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Zone Statistics</h3>
+    <div class="row tg" data-t="green"><span><i style="background:var(--g)"></i>Visible Zones</span><b id="vz">87.0%</b></div><div class="row tg" data-t="red"><span><i style="background:var(--r)"></i><span class="bad">Blind Zones</span></span><b class="bad" id="bz">13.0%</b></div><div class="row"><span><i style="background:var(--y)"></i>Estimated Area</span><b>0.0%</b></div></div>
+  </div>
+ </div>
+</main>
+
+<!-- Streamlined Manager Action Table & Compact KPI Summary -->
+<section id="mgr"><div class="wrap">
+  <section class="mcard">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px">
+      <h2>Postes à traiter, du plus urgent au moins urgent</h2>
+      <p class="headline" id="headline"></p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Poste</th>
+            <th>Score de posture</th>
+            <th>Temps en posture à corriger</th>
+            <th>Signalements sur 30 jours</th>
+            <th>Norme / méthode appliquée</th>
+            <th>Action recommandée</th>
+            <th>Score attendu après action</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Chiffres clés"></section>
+  <section class="mcard" id="kpidetail" hidden></section>
+</div></section>
+
+<!-- Balanced 2-Column Context Row -->
+<section class="bot">
+ <div class="card"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l6 4V9l6 4V4h6v17z"/></svg>Department: Lancement</h3>
+  <div class="dep"><svg viewBox="0 0 70 90" fill="none" stroke="#555" stroke-width="1.6"><circle cx="35" cy="22" r="10"/><path d="M24 14c4-8 18-8 22 0M26 34l-14 12v30M44 34l14 12v30M26 34h18v36H26z"/><path d="M44 34l14 12v26l-8 4-6-8z" fill="#F08A84" stroke="none" opacity=".8"/></svg>
+  <p><b>M.C. since 1998</b><br>Tendinite de De Quervain droite, tendinite du sus-épineux droit, épicondylite bilatérale.</p></div></div>
+ <div class="card"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Key Metrics</h3>
+  <div class="kv"><div><b>12 000 paquets / jour</b><span>30 panneaux chacun</span></div><div><b>4 opératrices</b><span>2 contrôle, 2 étiquetage</span></div></div></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+setInterval(function(){$('clk').textContent=new Date().toLocaleTimeString('en-GB')},1000);$('clk').textContent=new Date().toLocaleTimeString('en-GB');
+if(!window.THREE){$('cv').textContent='3D view unavailable';return}
+var T=THREE,host=$('cv'),S=new T.Scene(),R=new T.WebGLRenderer({antialias:true,alpha:true}),time=0,sd=7;
+function rnd(){sd=(sd*9301+49297)%233280;return sd/233280}
+R.setPixelRatio(Math.min(2,devicePixelRatio||1));R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1.1;host.appendChild(R.domElement);
+S.add(new T.HemisphereLight(0xffffff,0xb8b0a8,.85));var L=new T.DirectionalLight(0xfff4e6,.75);L.position.set(-6,14,9);L.castShadow=true;L.shadow.mapSize.set(2048,2048);var sc=L.shadow.camera;sc.left=-12;sc.right=12;sc.top=10;sc.bottom=-10;sc.far=40;L.shadow.bias=-.0005;S.add(L);
+function B(w,h,d,c,x,y,z,p,o){var m=new T.Mesh(new T.BoxGeometry(w,h,d),new T.MeshStandardMaterial({color:c,roughness:.6,metalness:o||0}));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(p||S).add(m);return m}
+function Cy(a,b,h,c,x,y,z,p){var m=new T.Mesh(new T.CylinderGeometry(a,b,h,14),new T.MeshStandardMaterial({color:c,roughness:.7}));m.position.set(x,y,z);m.castShadow=true;(p||S).add(m);return m}
+function Sp(r,c,x,y,z,p){var m=new T.Mesh(new T.SphereGeometry(r,16,12),new T.MeshStandardMaterial({color:c,roughness:.6}));m.position.set(x,y,z);m.castShadow=true;(p||S).add(m);return m}
+function flat(w,d,c,o,x,y,z){var m=new T.Mesh(new T.PlaneGeometry(w,d),new T.MeshBasicMaterial({color:c,transparent:true,opacity:o,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(x,y,z);S.add(m);return m}
+
+/* Room geometry */
+B(16.4,.2,11.4,0xE9EBED,0,-.1,0);B(16.4,3.2,.25,0xF4F5F7,0,1.5,-5.6);B(.25,3.2,11.4,0xF4F5F7,-8.1,1.5,0);B(16.4,.5,.2,0xE5E8EB,0,.25,5.6);B(.2,.5,11.4,0xE5E8EB,8.1,.25,0);
+B(16.4,.12,.05,0xD9DDE1,0,.06,-5.45);B(.05,.12,11.4,0xD9DDE1,-7.95,.06,0);
+[-5.6,-2.3,1,4.3].forEach(function(x){B(2.3,1.4,.04,0xFFFFFF,x,1.9,-5.46);B(2.1,1.2,.05,0xB4D3E6,x,1.9,-5.43);B(.04,1.2,.06,0xFFFFFF,x,1.9,-5.42)});
+[-3.5,.3,4].forEach(function(z){B(.04,1.4,2.3,0xFFFFFF,-7.96,1.9,z);B(.05,1.2,2.1,0xB4D3E6,-7.93,1.9,z)});
+B(1.1,2.2,.08,0x9AA4AD,7.2,1.1,-5.45);B(.08,.12,.08,0xCCCCCC,6.8,1.1,-5.4);
+B(2.4,.05,.7,0xCFD5DA,5,.75,-5.05);[[-1.1,-.3],[1.1,-.3],[-1.1,.3],[1.1,.3]].forEach(function(p){B(.05,.75,.05,0x9AA3AB,5+p[0],.37,-5.05+p[1])});
+[4.3,5.1,5.9].forEach(function(x){B(.55,.34,.04,0x1B252E,x,1.05,-5.15);B(.06,.2,.06,0x555,x,.87,-5.15)});
+function rack(x,z,len,ry){var g=new T.Group();g.position.set(x,0,z);g.rotation.y=ry;S.add(g);
+ [-1,1].forEach(function(a){[-.3,.3].forEach(function(b){B(.05,1.9,.05,0xA9B2BA,a*len/2,.95,b,g,.4)})});
+ var bl=[0x2F5FA7,0x3A6DB8,0x28508F,0x4A7CC2,0xE9EDF1];
+ [.25,.72,1.19,1.66].forEach(function(y){B(len,.03,.64,0xC3CAD0,0,y,0,g,.3);for(var i=0;i<len/.5-.5;i++){var h=.1+rnd()*.22;B(.42,h,.5,bl[Math.floor(rnd()*bl.length)],-len/2+.4+i*.5,y+.015+h/2,0,g)}})}
+rack(-4.5,-5.1,3.6,0);rack(-.2,-5.1,3.6,0);rack(-7.6,-2.2,3.6,Math.PI/2);rack(-7.6,2.4,3,Math.PI/2);rack(7.5,-.8,3.2,Math.PI/2);rack(-6.4,4.9,2.6,0);
+Cy(.28,.22,.4,0xE8E4DF,-7,.2,-4.8);Sp(.35,0x4F8F4A,-7,.8,-4.8);Sp(.28,0x5FA359,-6.8,1.15,-4.7);Sp(.26,0x3F7D3C,-7.2,1.1,-4.95);
+
+/* Worktables & Operators */
+var TB=[],WK=[],TP=[[-3.4,-.6],[2.4,-2.6],[-1.2,2.4],[4,1]];
+function stackBlue(g,x){for(var i=0;i<5;i++)B(.52,.05,.74,i%2?0x2F5FA7:0x3A6DB8,x,.03+i*.052,0,g)}
+TP.forEach(function(p,i){var g=new T.Group();g.position.set(p[0],0,p[1]);S.add(g);
+ var lg=[[-1.65,-.38],[1.65,-.38],[-1.65,.38],[1.65,.38]].map(function(q){return B(.06,1,.06,0xB8C0C8,q[0],.5,q[1],g,.5)});
+ var top=new T.Group();g.add(top);B(3.4,.05,.9,0xDDE2E7,0,0,0,top);B(3.2,.03,.7,0xC3CAD0,0,-.58,0,g);B(.5,.2,.5,0x2F5FA7,-1,.28,0,g);B(.5,.2,.5,0xF2F3F4,.2,.28,.05,g);B(.6,.35,.6,0xF6F7F8,1.35,.25,0,g);
+ var mv=new T.Group();top.add(mv);mv.position.y=.025;stackBlue(mv,0);stackBlue(mv,.62);
+ for(var k=0;k<4;k++)B(.5,.015,.7,0xFAFAFA,-1.2,.03+k*.016,.02,top);B(.3,.14,.3,0xB9C3CC,-.65,.08,-.25,top);
+ if(i==3){B(.46,.3,.04,0x1B252E,1.2,.2,-.25,top);B(.05,.12,.05,0x555,1.2,.06,-.25,top);B(.4,.02,.14,0xEEEEEE,1.2,.02,.05,top);B(.3,.1,.25,0xFFFFFF,.9,.07,-.2,top)}
+ TB.push({g:g,lg:lg,top:top,mv:mv});
+
+ var w=new T.Group();w.position.set(p[0],0,p[1]+.73);w.rotation.y=Math.PI/2;S.add(w);var o={w:w,legs:new T.Group(),hips:new T.Group(),torso:new T.Group(),arms:new T.Group()};
+ w.add(o.legs,o.hips);[-.09,.09].forEach(function(z){Cy(.07,.06,.95,0x1F2F4D,0,.475,z,o.legs);B(.24,.06,.1,0xEEEEEE,.05,.03,z,o.legs)});
+ o.hips.add(o.torso);Cy(.15,.17,.56,0x26396A,0,.28,0,o.torso);Sp(.115,0xD9A98A,0,.7,0,o.torso);Sp(.12,0x2A1C15,-.03,.73,0,o.torso).scale.set(1,.9,1);Sp(.055,0x2A1C15,-.17,.66,0,o.torso);
+ o.torso.add(o.arms);o.arms.position.y=.5;
+ [-.2,.2].forEach(function(z){Cy(.04,.035,.3,0x26396A,0,-.15,z,o.arms);var el=new T.Group();el.position.set(0,-.3,z);el.rotation.z=.4;o.arms.add(el);Cy(.032,.03,.28,0xD9A98A,0,-.14,0,el);Sp(.045,0xD9A98A,0,-.29,0,el)});
+ o.ring=new T.Mesh(new T.TorusGeometry(.5,.03,8,48),new T.MeshBasicMaterial({color:0x3DC47E}));o.ring.rotation.x=Math.PI/2;o.ring.position.set(p[0],.03,p[1]+.73);S.add(o.ring);WK.push(o)});
+
+/* Ergonomic data per table: before (b) / after (a) */
+var P=[
+  {b:{H:.78,d:-.15,f:45,a:60,sq:0,sc:9,hp:38},a:{H:.78,d:.19,f:14,a:45,sq:0,sc:5,hp:14}},
+  {b:{H:.72,d:0,f:50,a:35,sq:.1,sc:10,hp:44},a:{H:.95,d:.15,f:8,a:55,sq:0,sc:5,hp:15}},
+  {b:{H:.85,d:0,f:18,a:50,sq:0,sc:6,hp:12},a:{H:.94,d:.08,f:8,a:44,sq:0,sc:4,hp:6}},
+  {b:{H:.74,d:-.17,f:48,a:75,sq:.05,sc:11,hp:52},a:{H:.9,d:.18,f:10,a:50,sq:0,sc:6,hp:20}}
+];
+/* Map each 3D table index (0..3) to simulation slot index in RC (0..4) */
+var MAP=[3,2,4,1],NAME=['Tri des paquets','Fournitures (M.C.)','Réception de la coupe','Chariot'];
+
+/* Camera coverage */
+var green=flat(15.6,10.6,0x3DC47E,.13,0,.012,0),red=[];
+TP.forEach(function(p){red.push(flat(3.2,.9,0xE5484D,.38,p[0],.02,p[1]+.1))});var rs=flat(1.5,3.4,0xE5484D,.38,7.2,.021,-.8);red[3].userData.s=1;
+var CAM=[{n:'Cam A',p:new T.Vector3(-7.7,2.9,-5.2),t:new T.Vector3(1.5,0,1)},{n:'Cam B',p:new T.Vector3(7.7,2.9,-5.2),t:new T.Vector3(-2,0,1.5),p2:new T.Vector3(7.7,2.9,-2.2)},{n:'Cam C',p:new T.Vector3(-7.7,2.9,5.2),t:new T.Vector3(3,0,-1.5)}];
+CAM.forEach(function(c){c.cone=new T.Mesh(new T.ConeGeometry(1,1,28,1,true),new T.MeshBasicMaterial({color:0x3DC47E,transparent:true,opacity:.11,side:T.DoubleSide,depthWrite:false}));S.add(c.cone);
+ c.g=new T.Group();S.add(c.g);Sp(.24,0xFFFFFF,0,0,0,c.g);Sp(.13,0x1A2430,0,-.05,.2,c.g);B(.12,.12,.12,0xBBBBBB,0,.2,-.1,c.g)});
+function camUp(c,e){var p=c.p2?c.p.clone().lerp(c.p2,e):c.p,d=c.t.clone().sub(p),len=d.length();c.g.position.copy(p);c.g.lookAt(c.t);c.cone.scale.set(len*.5,len,len*.5);c.cone.position.copy(p).addScaledVector(d,.5);c.cone.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.clone().normalize().negate())}
+
+/* Labels */
+var tags=[];function mkTag(txt,obj,dy,dot){var e=document.createElement('div');e.className='tag';e.innerHTML=(dot?'<i></i>':'')+'<span>'+txt+'</span>';host.appendChild(e);tags.push({e:e,o:obj,dy:dy,dot:dot});return tags[tags.length-1]}
+CAM.forEach(function(c){mkTag(c.n,c.g,.45)});var WR=[3,2,4,1];var WT=WK.map(function(o,i){return mkTag(NAME[i],o.torso,1.1,1)});
+CAM.forEach(function(c,i){var e=tags[i].e;e.onclick=function(){c.off=!c.off;e.style.opacity=c.off?.45:1}});
+WT.forEach(function(t,i){t.e.onclick=function(){if(WR[i]>=0)sel(WR[i],true)}});
+
+/* Camera + orbit */
+var cam=new T.PerspectiveCamera(26,1,1,120),th=.82,ph=.62,rad=33,tg=new T.Vector3(0,.4,0);
+function place(){cam.position.set(tg.x+rad*Math.cos(ph)*Math.sin(th),tg.y+rad*Math.sin(ph),tg.z+rad*Math.cos(ph)*Math.cos(th));cam.lookAt(tg)}
+var dr=null;R.domElement.addEventListener('pointerdown',function(e){dr=[e.clientX,e.clientY];R.domElement.setPointerCapture(e.pointerId)});
+R.domElement.addEventListener('pointermove',function(e){if(!dr)return;th-=(e.clientX-dr[0])*.006;ph=Math.max(.25,Math.min(1.3,ph+(e.clientY-dr[1])*.005));dr=[e.clientX,e.clientY]});
+R.domElement.addEventListener('pointerup',function(){dr=null});
+R.domElement.addEventListener('wheel',function(e){e.preventDefault();rad=Math.max(14,Math.min(46,rad*(1+e.deltaY*.001)))},{passive:false});
+var ba=1;function size(){var w=host.clientWidth,h=host.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();ba=w/h;rad=Math.min(46,33*Math.max(1,1.7/ba))}
+addEventListener('resize',size);
+
+/* Simulation Items (ordered by urgency from the table + Camera Blind Spot) */
+var RC=[
+  {opt:'Cam B · Coverage (87% → 93%)',x:'Move Cam B 3 m along the wall to shrink the blind spot near the right table.',c:1},
+  {opt:'Chariot · Urgent (REBA 11 → 6)',x:'Bring the cart closer and load at hip height to cut bending and carrying distance.',k:3,n:'Chariot'},
+  {opt:'Fournitures · Urgent (REBA 10 → 5)',x:'Raise the rack by 23 cm so panels sit between elbow and shoulder height.',k:1,n:'Fournitures'},
+  {opt:'Tri des paquets · Urgent (REBA 9 → 5)',x:'Bring the sorting bins closer to the operator within normal reach.',k:0,n:'Tri des paquets'},
+  {opt:'Réception de la coupe · Watch (REBA 6 → 4)',x:'Raise the receiving surface to elbow height to reduce slight forward lean.',k:2,n:'Réception de la coupe'}
+];
+var tt=[0,0,0,0,0],goal=[0,0,0,0,0],cur=1,last=performance.now();
+
+/* Populate Dropdown */
+var simSel=$('simSel');
+RC.forEach(function(item,idx){
+  var o=document.createElement('option');
+  o.value=idx;
+  o.textContent=item.opt;
+  simSel.appendChild(o);
+});
+simSel.onchange=function(){cur=+simSel.value;ui()};
+
+function sm(t){return t*t*(3-2*t)}function lp(a,b,e){return a+(b-a)*e}
+function hex(s){var a=[47,181,111],m=[245,184,61],r=[229,72,77],f=s<=6?[a,m,(s-3)/3]:[m,r,(s-6)/4],k=Math.max(0,Math.min(1,f[2]));return 'rgb('+[0,1,2].map(function(i){return Math.round(lp(f[0][i],f[1][i],k))}).join(',')+')'}
+
+function ui(){
+  var r=RC[cur],t=tt[cur],e=sm(t),m,l,ok;
+  if(simSel.value!=String(cur))simSel.value=String(cur);
+  if(r.c){m=Math.round(lp(87,93,e))+'%';l='coverage (87% → 93%)';ok=true;}
+  else{var q=P[r.k];m=lp(q.b.sc,q.a.sc,e).toFixed(1)+'/15';l='posture score ('+q.b.sc+' → '+q.a.sc+')';ok=q.a.sc<8}
+  $('rn').textContent=(cur+1)+'/'+RC.length;$('rt').textContent=r.x;$('rm').textContent=m;$('rl').textContent=l;$('sl').value=Math.round(t*100);
+  var v=$('vd');v.className='vd'+(t>.98?(ok?' ok':' bad'):'');
+  v.textContent=t<.02?'Baseline state measured by cameras.':t>.98?(r.c?'Coverage rises to 93%. Safe to test on floor.':'Score drops to '+P[r.k].a.sc+'/15 in twin: ready for 2-week trial.'):'Simulating change in 3D twin…';
+  var cv=lp(87,93,sm(tt[0]));$('cov').textContent=Math.round(cv)+'%';$('ring').setAttribute('stroke-dasharray',(cv/100*314).toFixed(0)+' 314');$('vis').textContent=Math.round(cv)+'%';$('bl').textContent=Math.round(100-cv)+'%';$('vz').textContent=cv.toFixed(1)+'%';$('bz').textContent=(100-cv).toFixed(1)+'%';
+}
+
+$('pv').onclick=function(){cur=(cur+RC.length-1)%RC.length;ui()};
+$('nx').onclick=function(){cur=(cur+1)%RC.length;ui()};
+$('b1').onclick=function(){goal[cur]=1};
+$('b0').onclick=function(){goal[cur]=0};
+$('sl').oninput=function(e){tt[cur]=goal[cur]=e.target.value/100};
+
+var lay={cones:1,red:1,green:1,tags:1};
+function sel(k,ap){cur=k;if(ap)goal[k]=1;ui()}
+
+$('bt').onclick=function(){
+  var r=RC[cur];
+  [].forEach.call(document.querySelectorAll('#mgr .rowbtn'),function(b){
+    if(b.textContent.trim()===r.n&&b.getAttribute('aria-expanded')!=='true')b.click();
+  });
+  var e=document.querySelector('#mgr tr.main.open');
+  if(e)e.scrollIntoView({behavior:'smooth',block:'center'});
+};
+window.DAPO={sel:sel,lay:lay};
+
+var V=new T.Vector3();
+function loop(n){var dt=Math.min(.05,(n-last)/1000);last=n;time+=dt;
+ for(var i=0;i<RC.length;i++)if(tt[i]!==goal[i]){tt[i]+=Math.sign(goal[i]-tt[i])*dt/2.2;if(Math.abs(goal[i]-tt[i])<.01)tt[i]=goal[i]}
+ var ec=sm(tt[0]);CAM.forEach(function(c,i){camUp(c,i==1?ec:0)});red[3].scale.x=lp(1,.35,ec);red[3].position.x=lp(4,4.6,ec);rs.scale.set(lp(1,.3,ec),lp(1,.35,ec),1);
+ TB.forEach(function(tb,i){var p=P[i],k=MAP[i],e=k<0?0:sm(tt[k]),b=p.b,a=p.a,H=lp(b.H,a.H,e),ph=i*1.3,f=lp(b.f,a.f,e)+3*Math.sin(time*1.8+ph),ar=lp(b.a,a.a,e)+5*Math.sin(time*1.8+ph+1),sq=lp(b.sq,a.sq,e),hy=.95-sq,o=WK[i],r=Math.PI/180,s=lp(b.sc,a.sc,e);
+  tb.top.position.y=H;tb.lg.forEach(function(l){l.scale.y=H;l.position.y=H/2});tb.mv.position.z=lp(b.d,a.d,e);
+  o.legs.scale.y=hy/.95;o.hips.position.y=hy;o.torso.rotation.z=-f*r;o.arms.rotation.z=(f+ar)*r;o.ring.material.color.set(hex(s));
+  WT[i].e.querySelector('span').textContent=NAME[i]+' · '+s.toFixed(0)+'/15';WT[i].e.querySelector('i').style.background=hex(s)});
+ CAM.forEach(function(c){c.cone.visible=!!lay.cones&&!c.off});green.visible=!!lay.green;rs.visible=!!lay.red;red.forEach(function(r){r.visible=!!lay.red});WT.forEach(function(t){t.e.style.display=lay.tags?'':'none'});$('bt').hidden=!!RC[cur].c;
+ ui();place();R.render(S,cam);
+ var w=host.clientWidth,h=host.clientHeight;tags.forEach(function(t){t.o.getWorldPosition(V);V.y+=t.dy;V.project(cam);t.e.style.transform='translate('+((V.x*.5+.5)*w)+'px,'+((-V.y*.5+.5)*h)+'px) translate(-50%,-130%)'});
+ requestAnimationFrame(loop)}
+size();requestAnimationFrame(loop);
+})();
+</script>
+<script>
+(function(){var $=function(i){return document.getElementById(i)},pop=$('pop'),nav=document.querySelectorAll('nav button'),open=-1,D=window.DAPO||{lay:{},sel:function(){}};
+function top(){scrollTo({top:0,behavior:'smooth'})}
+function show(i){nav.forEach(function(b,k){b.classList.toggle('on',k==(open<0?0:open))});pop.hidden=open<2;
+ if(open==2)pop.innerHTML='<h3>Alerts</h3><div class="al"><b>Blind spot · Table 3</b><span>Estimated activity: working (p = 72%).</span><button class="btn" data-a="0">Simulate the Cam B move</button></div><div class="al"><b>Posture · Chariot</b><span>Score 11 out of 15, confirmed by 5 worker reports.</span><button class="btn" data-a="1">Simulate in the twin</button></div>';
+ if(open==3)pop.innerHTML='<h3>Display</h3>'+[['cones','Camera coverage cones'],['green','Visible area (green)'],['red','Blind-spot patches (red)'],['tags','Worker labels']].map(function(x){return '<label><input type="checkbox" data-l="'+x[0]+'"'+(D.lay[x[0]]?' checked':'')+'> '+x[1]+'</label>'}).join('')}
+nav.forEach(function(b,i){b.onclick=function(){if(i<2){open=-1;show();i?$('mgr').scrollIntoView({behavior:'smooth'}):top()}else{open=open==i?-1:i;show()}}});
+$('zd').onclick=function(){var d=$('det');d.hidden=!d.hidden;this.textContent=d.hidden?'Show workers, tasks & zones':'Hide workers, tasks & zones';this.setAttribute('aria-expanded',!d.hidden)};
+document.querySelector('.bell').onclick=function(){open=open==2?-1:2;show()};
+document.addEventListener('click',function(e){var t=e.target.closest('[data-t]'),a=e.target.closest('[data-a]');
+ if(t){var k=t.dataset.t;D.lay[k]=!D.lay[k];document.querySelectorAll('[data-t="'+k+'"]').forEach(function(x){x.classList.toggle('off',!D.lay[k])})}
+ if(a){D.sel(+a.dataset.a,true);open=-1;show();top()}
+ if(e.target.dataset&&e.target.dataset.l)D.lay[e.target.dataset.l]=e.target.checked});
+
+/* Map table station name -> RC index */
+var M={'Chariot':1,'Fournitures':2,'Tri des paquets':3,'Réception de la coupe':4};
+new MutationObserver(function(){document.querySelectorAll('#mgr tr.main.open').forEach(function(tr){var d=tr.nextElementSibling,n=tr.querySelector('.rowbtn').textContent.trim(),c=d&&d.querySelector('.detail-in');
+ if(c&&M[n]!==undefined&&!c.querySelector('.simbtn')){var b=document.createElement('button');b.className='simbtn';b.textContent='▶ Simulate this change in the 3D twin';b.onclick=function(e){e.stopPropagation();D.sel(M[n],true);top()};c.prepend(b)}})}).observe($('rows'),{childList:true,subtree:true});
+})();
+</script>
+<script>
+(function(){
+  var S=[
+    {name:"Chariot",reba:11,hp:52,rep:5,zones:"dos, genoux",after:6,action:"Rapprocher le chariot et charger à hauteur de hanche.",
+     why:"Le chargement du chariot cumule deux causes : des paquets soulevés depuis le sol et une longue distance de portage. Les deux sources le confirment.",
+     ev:[["cam","Dos penché en avant pendant 52 % du temps de travail, score de posture 11 sur 15."],
+         ["wrk","5 signalements sur 30 jours (dos et genoux), dont 2 d'intensité forte."],
+         ["plan","Le chariot est à plus de 10 m du poste de tri."]],
+     norm:"Soulever et porter : ISO 11228-1, avec une limite de charge selon la hauteur et la distance.",
+     gains:{pain:["Score de posture attendu : 6 sur 15 (estimation). Les signalements du dos devraient baisser, à vérifier sur 4 semaines.",["cam","wrk"]],
+            prod:["Jusqu'à 10 m de portage en moins par lot (estimation sur le plan).",["plan"]],
+            qual:["Moins de fatigue en fin de poste. L'effet sur les erreurs de lot n'est pas suivi aujourd'hui.",["none"]]},
+     effort:["Faible","Déplacer le chariot et marquer l'emplacement au sol. Pas de travaux."],
+     risk:"Le nouveau circuit peut croiser la sortie vers les chaînes.",fix:"Marquer le circuit au sol avant l'essai.",back:"Oui, en une heure.",
+     idle:"Le poste le plus chargé reste à risque élevé pour le dos, et les signalements risquent d'augmenter.",
+     trial:"Déplacer le chariot de façon provisoire pendant 2 semaines. Garder le changement si le score de posture passe sous 8 et si les signalements du dos baissent. Sinon, remettre en l'état."},
+    {name:"Fournitures",reba:10,hp:44,rep:4,zones:"dos",after:5,action:"Remonter le rack, fournitures fréquentes entre coude et épaule.",
+     why:"Le rack est trop bas : l'opérateur se penche à chaque saisie. Les deux sources le confirment.",
+     ev:[["cam","Dos penché en avant pendant 44 % du temps, score de posture 10 sur 15."],
+         ["wrk","4 signalements sur 30 jours, tous au dos."],
+         ["plan","Le rack est à l'opposé du circuit : le trajet de ravitaillement est long."]],
+     norm:"Postures de travail : ISO 11226. Zones d'atteinte : ISO 14738.",
+     gains:{pain:["Score de posture attendu : 5 sur 15 (estimation). Plus de saisie sous le genou.",["cam","wrk"]],
+            prod:["Moins de pas de ravitaillement et gestes plus rapides car l'article est à portée.",["plan"]],
+            qual:["Un rangement étiqueté (méthode 5S) devrait réduire les erreurs de choix d'article. Le taux d'erreurs n'est pas suivi aujourd'hui.",["none"]]},
+     effort:["Moyen","Remonter ou remplacer le rack : une demi-journée à une journée selon le modèle."],
+     risk:"Arrêt court du poste pendant l'intervention.",fix:"Intervenir hors production, par exemple en fin de semaine.",back:"Moyenne : le rack se remet en place, avec une intervention.",
+     idle:"Les opérateurs continuent de se pencher à chaque saisie, avec un risque durable pour le dos.",
+     trial:"Avant d'acheter, rehausser le rack sur des cales provisoires pendant 2 semaines. Valider si le score de posture baisse et si les signalements au dos diminuent."},
+    {name:"Tri des paquets",reba:9,hp:38,rep:3,zones:"épaules, dos",after:5,action:"Rapprocher les bacs de tri, classés par fréquence d'usage.",
+     why:"Les bacs sont hors de la zone d'atteinte normale : le bras reste tendu pour trier. Les deux sources le confirment.",
+     ev:[["cam","Bras tendu loin du corps pendant 38 % du temps, score de posture 9 sur 15."],
+         ["wrk","3 signalements sur 30 jours (épaules et dos)."],
+         ["plan","Plusieurs bacs sont hors de la zone d'atteinte normale du poste."]],
+     norm:"Distances d'atteinte : ISO 14738. Le score des bras suit la méthode RULA.",
+     gains:{pain:["Score de posture attendu : 5 sur 15 (estimation). Épaules moins sollicitées.",["cam","wrk"]],
+            prod:["Tri plus rapide car les mouvements d'extension disparaissent.",["cam"]],
+            qual:["Un classement par fréquence d'usage devrait réduire les erreurs de tri. Le taux d'erreurs n'est pas suivi aujourd'hui.",["none"]]},
+     effort:["Faible","Déplacer les bacs et refaire l'étiquetage (méthode 5S)."],
+     risk:"Période d'adaptation où les opérateurs cherchent les nouveaux emplacements.",fix:"Prévenir l'équipe et afficher un plan des bacs.",back:"Oui, immédiat.",
+     idle:"Les épaules restent sollicitées en continu et les signalements risquent de se répéter.",
+     trial:"Rapprocher les bacs pendant 2 semaines. Valider si le score de posture baisse et si les signalements aux épaules diminuent."},
+    {name:"Étiquetage",reba:7,hp:22,rep:3,zones:"poignets",after:4,action:"Alterner les tâches et prévoir des micro-pauses.",
+     why:"Les travailleurs signalent des douleurs aux poignets alors que la caméra montre un risque moyen. La cause est sans doute la répétition des gestes plus que la posture.",
+     ev:[["cam","Posture moyenne : score 7 sur 15, 22 % du temps à corriger. La caméra suit la fréquence des gestes mais pas la force exercée."],
+         ["wrk","3 signalements sur 30 jours, tous aux poignets."]],
+     norm:"Gestes répétitifs : ISO 11228-3, avec la méthode OCRA.",
+     gains:{pain:["Moins de répétitions par personne. Les signalements aux poignets devraient baisser, à vérifier sur 4 semaines.",["wrk","cam"]],
+            prod:["Cadence d'équipe stable si la rotation est bien planifiée.",["cam"]],
+            qual:["Pas d'effet attendu sur la qualité.",["none"]]},
+     effort:["Faible","Planning de rotation et micro-pauses, sans investissement."],
+     risk:"Perte de rythme si les opérateurs ne maîtrisent pas les deux tâches.",fix:"Commencer par une rotation entre deux postes déjà maîtrisés.",back:"Oui, immédiat.",
+     idle:"Les douleurs aux poignets peuvent s'installer, avec un risque d'arrêts de travail.",
+     trial:"Vérifier d'abord sur place avec un ergonome, puis tester une rotation pendant 2 semaines. Valider si les signalements aux poignets baissent sans perte de cadence."},
+    {name:"Réception de la coupe",reba:6,hp:12,rep:1,zones:"dos",after:4,action:"Remonter le plan de réception à hauteur du coude.",
+     why:"Risque moyen et un seul signalement : il n'y a pas d'urgence, mais le plan de réception est un peu bas.",
+     ev:[["cam","Score de posture 6 sur 15, 12 % du temps à corriger."],
+         ["wrk","1 signalement sur 30 jours (dos)."]],
+     norm:"Postures de travail : ISO 11226.",
+     gains:{pain:["Score de posture attendu : 4 sur 15 (estimation).",["cam"]],
+            prod:["Peu d'effet attendu.",["none"]],
+            qual:["Pas d'effet attendu.",["none"]]},
+     effort:["Faible","Régler la hauteur du plan de réception."],
+     risk:"Aucun risque notable.",fix:"Aucune mesure particulière.",back:"Oui, immédiat.",
+     idle:"Pas de danger à court terme. À suivre le mois suivant.",
+     trial:"Pas d'essai nécessaire : ajuster la hauteur puis suivre le score de posture."},
+    {name:"Sortie vers les chaînes",reba:3,hp:10,rep:0,zones:"",after:null,action:"",
+     why:"Aucun problème détecté par la caméra, aucun signalement des travailleurs. Il n'y a rien à changer.",
+     ev:[["cam","Score de posture 3 sur 15, 10 % du temps à corriger."],["wrk","Aucun signalement sur 30 jours."]]}
+  ];
+  var CIRCUIT_NOW=69, CIRCUIT_TARGET=33, LOTS=40;
+  var TAG={cam:["cam","Caméra"],wrk:["wrk","Travailleurs"],plan:["plan","Plan de l'atelier"],none:["none","Non mesuré aujourd'hui"]};
+  function tag(k){return `<span class="src ${TAG[k][0]}">${TAG[k][1]}</span>`}
+  function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+  function fmt(n,d){return n.toFixed(d).replace(".",",")}
+  function risk(r){return r<=3?"faible":r<=7?"moyen":r<=10?"élevé":"très élevé"}
+  function level(s){
+    var cam=s.reba>=8, wrk=s.rep>=3;
+    if(cam&&wrk) return {rank:3,k:"urgent",l:"Urgent",conf:"Élevée : la caméra et les travailleurs sont d'accord.",c:"b-ok"};
+    if(cam||wrk) return {rank:2,k:"act",l:"À agir",conf:"Moyenne : une seule source alerte, à vérifier sur place avant de changer.",c:"b-watch"};
+    if(s.reba>=4||s.rep>=1) return {rank:1,k:"watch",l:"À surveiller",conf:"Faible : peu de preuves, pas de changement urgent.",c:"b-act"};
+    return {rank:0,k:"ok",l:"Sans problème",conf:"Aucun changement nécessaire.",c:"b-ok"};
+  }
+  S.forEach(function(s){s.lv=level(s)});
+  S.sort(function(a,b){return b.lv.rank-a.lv.rank||b.reba-a.reba});
+
+  var urgentList=S.filter(function(s){return s.lv.rank===3});
+  var urgent=urgentList.length;
+  var reports=S.reduce(function(t,s){return t+s.rep},0);
+  var hp=Math.round(S.reduce(function(t,s){return t+s.hp},0)/S.length);
+
+  document.getElementById("headline").textContent=urgent+" postes sur "+S.length+" sont urgents · Priorité : "+S[0].name;
+
+  /* KPI cards */
+  var K=[
+    {id:"urgent",l:"Postes urgents",v:`${urgent} <small>sur ${S.length}</small>`,tags:["cam","wrk"]},
+    {id:"rep",l:"Signalements des travailleurs",v:`${reports}`,tags:["wrk"]},
+    {id:"hp",l:"Temps moyen en posture à corriger",v:`${hp} <small>%</small>`,tags:["cam"]},
+    {id:"circ",l:"Circuit d'un lot dans la section",v:`${CIRCUIT_NOW} <small>m</small>`,tags:["plan"]}
+  ];
+  var openK=null, openR=null;
+  function renderKpis(){
+    document.getElementById("kpis").innerHTML=K.map(function(k){
+      return `<button type="button" class="kpi" data-k="${k.id}" aria-pressed="${openK===k.id}" aria-controls="kpidetail">
+        <span class="l">${k.l}</span><span class="v">${k.v}</span>
+        <span class="hint">${openK===k.id?"Masquer le détail":"Voir pourquoi"}</span></button>`;
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll(".kpi"),function(b){
+      b.addEventListener("click",function(){var id=b.getAttribute("data-k");openK=(openK===id?null:id);renderKpis();renderKpiDetail()});
+    });
+  }
+  function bars(items,max,cls,unit){
+    return `<div class="bars">${items.map(function(it){
+      return `<div class="bar"><span>${esc(it.label)}</span><span class="track"><span class="fill ${cls}" style="display:block;width:${Math.max(2,it.value/max*100)}%"></span></span><b>${it.value}${unit||""}</b></div>`;
+    }).join("")}</div>`;
+  }
+  function renderKpiDetail(){
+    var box=document.getElementById("kpidetail");
+    if(!openK){box.hidden=true;box.innerHTML="";return}
+    var h="";
+    if(openK==="urgent"){
+      h=`<h2>Pourquoi ${urgent} postes urgents</h2>
+      <p class="lead">Un poste est urgent quand la caméra et les travailleurs alertent sur le même poste. Deux sources indépendantes qui concordent réduisent le risque de se tromper avant de modifier l'aménagement.</p>
+      <div class="tags">${tag("cam")}${tag("wrk")}</div>
+      <div class="mini">${urgentList.map(function(s){
+        return `<div class="minirow"><span><b>${esc(s.name)}</b> · score de posture ${s.reba} sur 15 · ${s.rep} signalements</span><button type="button" class="link" data-go="${esc(s.name)}">Voir le détail du poste</button></div>`}).join("")}</div>`;
+    } else if(openK==="rep"){
+      var withRep=S.filter(function(s){return s.rep>0});
+      var both=withRep.filter(function(s){return s.reba>=8}).length;
+      h=`<h2>Où les travailleurs signalent une gêne</h2>
+      <p class="lead">Les signalements sont anonymes et traduisent ce que les opérateurs ressentent. Sur les ${withRep.length} postes concernés, ${both} sont aussi classés à risque élevé par la caméra, ce qui renforce la fiabilité de ces signalements.</p>
+      <div class="tags">${tag("wrk")}</div>
+      ${bars(withRep.map(function(s){return {label:s.name+" ("+s.zones+")",value:s.rep}}),5,"f-wrk")}`;
+    } else if(openK==="hp"){
+      h=`<h2>Combien de temps les opérateurs restent dans une posture à corriger</h2>
+      <p class="lead">Le risque vient de la durée cumulée, pas seulement de l'instant. Plus l'opérateur reste longtemps dans une posture à corriger, plus la fatigue et le risque de douleur augmentent.</p>
+      <div class="tags">${tag("cam")}</div>
+      ${bars(S.slice().sort(function(a,b){return b.hp-a.hp}).map(function(s){return {label:s.name,value:s.hp}}),60,"f-cam"," %")}`;
+    } else {
+      var km=(CIRCUIT_NOW-CIRCUIT_TARGET)*LOTS/1000;
+      h=`<h2>Pourquoi raccourcir le circuit</h2>
+      <p class="lead">Moins de déplacements veut dire moins de fatigue et moins de temps sans valeur ajoutée (méthode VSM et Lean). Avec ${LOTS} lots par équipe, le nouveau circuit évite environ ${fmt(km,1)} km de marche (estimation).</p>
+      <div class="tags">${tag("plan")}</div>
+      ${bars([{label:"Aménagement actuel",value:CIRCUIT_NOW},{label:"Après réaménagement",value:CIRCUIT_TARGET}],CIRCUIT_NOW,"f-plan"," m")}`;
+    }
+    box.innerHTML=`<div class="kd-head"><div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">${h}</div><button type="button" class="close" id="kclose">Fermer</button></div>`;
+    box.hidden=false;
+    document.getElementById("kclose").addEventListener("click",function(){openK=null;renderKpis();renderKpiDetail()});
+    Array.prototype.forEach.call(box.querySelectorAll("[data-go]"),function(b){
+      b.addEventListener("click",function(){goTo(b.getAttribute("data-go"))});
+    });
+  }
+
+  /* Detail of a station */
+  function detail(s){
+    var evs=`<ul class="ev">${s.ev.map(function(e){return `<li>${tag(e[0])}<span>${esc(e[1])}</span></li>`}).join("")}</ul>`;
+    var conf=`<div class="conf"><span class="badge ${s.lv.c}">Confiance : ${s.lv.conf.split(" : ")[0]}</span><span>${esc(s.lv.conf.split(" : ")[1]||"")}</span></div>`;
+    if(!s.action){
+      return `<div class="detail-in"><div class="sec"><h4>Pourquoi ce diagnostic</h4><p>${esc(s.why)}</p>${evs}</div>${conf}</div>`;
+    }
+    function gain(title,g){return `<div class="gain"><h3>${title}</h3><p>${esc(g[0])}</p><div class="tags"><span>Mesuré par :</span>${g[1].map(tag).join("")}</div></div>`}
+    return `<div class="detail-in">
+      <div class="sec"><h4>Pourquoi ce poste est prioritaire (${s.lv.l})</h4><p>${esc(s.why)}</p>${evs}${conf}</div>
+      <div class="sec"><h4>Ce que le changement doit apporter</h4><div class="gains">
+        ${gain("Moins de douleur",s.gains.pain)}${gain("Meilleure productivité",s.gains.prod)}${gain("Meilleure qualité",s.gains.qual)}
+      </div></div>
+      <div class="sec"><h4>Coût, risque et retour en arrière</h4><div class="facts">
+        <div class="fact"><b>Effort</b><span><span class="badge ${s.effort[0]==="Faible"?"b-ok":s.effort[0]==="Moyen"?"b-watch":"b-act"}">${s.effort[0]}</span></span><span>${esc(s.effort[1])}</span></div>
+        <div class="fact"><b>Risque du changement</b><span>${esc(s.risk)}</span><span>${esc(s.fix)}</span></div>
+        <div class="fact"><b>Retour en arrière possible ?</b><span>${esc(s.back)}</span></div>
+        <div class="fact"><b>Si l'on ne fait rien</b><span>${esc(s.idle)}</span></div>
+      </div></div>
+      <div class="callout"><h4 style="color:var(--ink)">Comment s'assurer que ça marche avant de s'engager</h4>
+        <p>${esc(s.trial)}</p></div>
+    </div>`;
+  }
+
+  var STD={"Chariot":["ISO 11228-1","Soulever et porter"],"Fournitures":["ISO 11226 · ISO 14738","Postures de travail, zones d'atteinte"],"Tri des paquets":["ISO 14738 · RULA","Zones d'atteinte, bras"],"Étiquetage":["ISO 11228-3 · OCRA","Gestes répétitifs"],"Réception de la coupe":["ISO 11226","Postures de travail"],"Sortie vers les chaînes":["Aucune","Pas de risque détecté"]};
+  function std(s){var x=STD[s.name]||["—",""];return `<span class="val" style="font-size:13.5px">${x[0]}</span>`}
+
+  function renderRows(){
+    document.getElementById("rows").innerHTML=S.map(function(s,i){
+      var rep=s.rep===0?`<span class="none">Aucun</span>`:`<span class="val">${s.rep}</span>`;
+      var open=openR===i;
+      return `<tr class="main${open?" open":""}" data-i="${i}">
+        <td class="first"><button type="button" class="rowbtn" aria-expanded="${open}" aria-controls="d${i}">${esc(s.name)}</button></td>
+        <td data-label="Score de posture"><span class="val">${s.reba} / 15</span></td>
+        <td data-label="Temps à corriger"><span class="val">${s.hp} %</span></td>
+        <td data-label="Signalements (30 j)">${rep}</td>
+        <td data-label="Norme / méthode">${std(s)}</td>
+        <td data-label="Action recommandée">${s.action?esc(s.action):`<span class="none">Aucune action</span>`}</td>
+        <td data-label="Score attendu">${s.after?`<span class="eff">${s.reba} → ${s.after}</span>`:`<span class="none">—</span>`}</td></tr>
+        <tr class="detail" id="d${i}" ${open?"":"hidden"}><td colspan="7">${open?detail(s):""}</td></tr>`;
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("tr.main"),function(tr){
+      tr.addEventListener("click",function(){var i=+tr.getAttribute("data-i");openR=(openR===i?null:i);renderRows()});
+    });
+  }
+  function goTo(name){
+    var i=S.findIndex(function(s){return s.name===name});
+    if(i<0)return;
+    openR=i;renderRows();
+    var el=document.querySelector('tr.main[data-i="'+i+'"]');
+    if(el&&el.scrollIntoView)el.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+
+  renderKpis();renderRows();
+})();
+</script>
+</body></html>
